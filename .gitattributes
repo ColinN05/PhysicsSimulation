@@ -1,1 +1,1 @@
-dependencies/glew/* linguist-vendored
+dependencies/glew/**.h linguist-vendored
