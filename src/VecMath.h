@@ -56,6 +56,8 @@ struct Vec3
 	}
 
 	Mat3 StarMatrix();
+
+	float MaxComponent();
 };
 
 Vec3 CrossProduct(Vec3 v, Vec3 w);

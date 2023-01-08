@@ -107,6 +107,14 @@ Mat3 Vec3::StarMatrix()
 	return A;
 }
 
+float Vec3::MaxComponent()
+{
+	float maxComponent = x;
+	if (y > maxComponent) maxComponent = y;
+	if (z > maxComponent) maxComponent = z;
+	return maxComponent;
+}
+
 Vec3 CrossProduct(Vec3 v, Vec3 w)
 {
 	Vec3 ret = 

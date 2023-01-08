@@ -1,3 +1,4 @@
+#pragma once
 #include <windows.h>
 #include <iostream>
 
@@ -7,10 +8,13 @@ struct Window
 	HDC deviceContext;
 	HGLRC renderContext;
 
-	static bool Destroyed;
+	bool Destroyed;
 
-	Window();
+	Window(uint32_t width = 960, uint32_t height = 540);
 	void Init();
 	void Update();
 	void SwapBuffers();
+
+	uint32_t Width, Height;
+	float TargetAspectRatio = 1920.0f/1080.0f;
 };

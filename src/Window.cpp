@@ -4,21 +4,35 @@
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    LONG_PTR windowLongPtr = GetWindowLongPtr(hwnd, GWLP_USERDATA);
+    Window* window = reinterpret_cast<Window*>(windowLongPtr);
+
     switch (uMsg)
     {
+        case WM_CREATE:
+        {
+            CREATESTRUCT* createStruct = reinterpret_cast<CREATESTRUCT*>(lParam);
+            Window* window = reinterpret_cast<Window*>(createStruct->lpCreateParams);
+            SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)window);
+            break;
+        }
         case WM_DESTROY:
         {
-            Window::Destroyed = true;
+            if (!window) break;
+            window->Destroyed = true;
             break;
         }
     	case WM_SIZE:
     	{
-            int width = LOWORD(lParam);
-            int height = HIWORD(lParam);
+            if (!window) break;
 
-            float r = 1.0f;
-            glViewport((width- r * height)/2, 0, r * height,height);
-            //glViewport(0, 0, width, height);
+            int resizeWidth = LOWORD(lParam);
+            int resizeHeight = HIWORD(lParam);
+
+            window->Width = resizeWidth; window->Height = resizeHeight;
+
+            float r = window->TargetAspectRatio;
+            glViewport((resizeWidth- r * resizeHeight) / 2, 0, r * resizeHeight,resizeHeight);
     		break;
     	}
     	default:
@@ -40,7 +54,7 @@ void Window::Update()
     Sleep(0);
 }
 
-Window::Window()
+Window::Window(uint32_t width, uint32_t height)
 {
     const wchar_t CLASS_NAME[] = L"Sample Window Class";
 
@@ -61,13 +75,17 @@ Window::Window()
         (LPCSTR)"Title",
         WS_OVERLAPPEDWINDOW,
 
-        CW_USEDEFAULT, CW_USEDEFAULT, 600, 600,
+        CW_USEDEFAULT, CW_USEDEFAULT, width, height,
 
         NULL,
         NULL,
         NULL,
-        NULL
+        (void*)this
     );
+
+    Width = width; Height = height;
+    TargetAspectRatio = (float)width/(float)height;
+
 
     if (windowHandle == NULL)
     {

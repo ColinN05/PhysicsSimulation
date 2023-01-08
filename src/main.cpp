@@ -2,70 +2,43 @@
 #include <iostream>
 #include "Window.h"
 #include "Physics.h"
+#include "PhysicsRenderer.h"
 #include "stb_image.h"
 #include <cmath>
 #include "Time.h"
-#include <algorithm>
-
-bool Window::Destroyed;
 
 int main()
 {
-	Window win = Window();
+	Window win = Window(800,600);
 
 	Time::Init();
 
 	PhysicsRenderer::InitializeGLEW();
 	PhysicsRenderer renderer;
 	renderer.Init();
-	renderer.SetCameraPosition(Vec3(0.0f,0.0f,15.0f));
+	renderer.SetCameraPosition(Vec3(50.0f,45.0f,70.0f));
+	renderer.SetCameraAngle(-0.6f, -0.25f);
+	renderer.SetRenderWindow(&win);
 
 	PhysicsWorld world;
-	world.Gravity = 0.0f;
+	world.SetGravity(0.0f);
 
-/*
-
-	for (int i = 2; i >= -2; i--)
+	for (int i = 0; i < 100; i++)
 	{
-		for (int j = -2; j <= i; j++)
-		{
-			for (int k = 0; k < 5; k++)
-			{
-				RigidSphere* sphere = new RigidSphere;
-				sphere->SetMass(100.0f);
-				sphere->SetRadius(1.0f);
-				world.SpawnRigidBody(sphere, Vec3(2.0f * j + 2.0f - i,2.1f * (float)k, (2.0f - i) * sqrtf(3.0f)));	
-			}
-		}
+		float x = ((double) rand() / (RAND_MAX));
+		float y = ((double) rand() / (RAND_MAX));
+		float z = ((double) rand() / (RAND_MAX)); 
+		RigidSphere* sphere = world.SpawnRigidSphere(2.0f * Vec3(x,y,z));
+		sphere->SetRadius(0.1f);
+		sphere->SetMass(1000.0f);
+		sphere->Material.Restitution = 0.6f;
+		sphere->ApplyImpulse(Vec3(0.0f,0.0f,-10000.0f));
 	}
 
-	RigidBox* box = new RigidBox;
-	box->SetExtent(Vec3(40.0f, 20.0f, 1.0f));
-	box->SetMass(10000.0f);
-	box->AngularMomentum = {0.0f, 10000000.0f, 10000.0f};
-	world.SpawnRigidBody(box, Vec3(-10.0f,-10.0f,-5.0f));
-
-	RigidBox* box2 = new RigidBox;
-	box2->SetExtent(Vec3(40.0f, 20.0f, 1.0f));
-	box2->SetMass(10000.0f);
-	box2->AngularMomentum = {0.0f, -10000000.0f, 10000.0f};
-	world.SpawnRigidBody(box2, Vec3(-10.0f,-10.0f,5.0f));
-
-*/
-
-	RigidBox* box1 = new RigidBox;
-	box1->SetExtent(Vec3(0.2f, 5.0f, 12.0f));
-	box1->SetMass(100.0f);
-	world.SpawnRigidBody(box1, Vec3(-10.0f,0.0f,0.0f));
-	ApplyImpulse(box1, Vec3(200.0f,0.0f,0.0f));
-	box1->AngularMomentum = {50.0f,0.0f,100.0f};
-
-	RigidBox* box2 = new RigidBox;
-	box2->SetExtent(Vec3(1.0f, 1.0f, 7.0f));
-	box2->SetMass(100.0f);
-	world.SpawnRigidBody(box2, Vec3(10.0f,0.0f,0.0f));
-	ApplyImpulse(box2, Vec3(-200.0f,0.0f,0.0f));
-	box2->AngularMomentum = {20.0f,50.0f,100.0f};
+	RigidBox* box = world.SpawnRigidBox(Vec3(5.0f,0.0f,-30.0f));
+	box->SetExtent(Vec3(5.0f,5.0f,0.5f));
+	box->SetMass(1000000.0f);
+	box->Material.Restitution = 0.6;
 
 	bool simulationRunning = false;
 
@@ -73,39 +46,45 @@ int main()
 
 	unsigned int count = 0;
 
-	while (!Window::Destroyed)
+	while (!win.Destroyed)
 	{
 		float deltaTime = Time::GetTime() - time;
 		time = Time::GetTime();
 
 		count++;
-		if (count % 100 == 1)
-		{
-			std::cout << 1.0f/deltaTime << " fps\n";
-		}
+		if (count % 1000 == 1)
+			std::cout << (int)(1.0f / deltaTime) << "fps\n";
 
 		win.Update();
 
 		if (simulationRunning)
-		{
 			world.Step(deltaTime);
-		}
 
-		if (GetAsyncKeyState(VK_RSHIFT))
+		if (GetAsyncKeyState(VK_RSHIFT)) // run simulation
 			simulationRunning = true;
-		if (GetAsyncKeyState(0x52))
-		{
+		if (GetAsyncKeyState(0x52)) // pause simulation
 			simulationRunning = false;
-		}
 
 		renderer.DetectCameraInput(deltaTime);
 		renderer.ClearBuffers();
-
-		for (RigidBody* rigidBody : world.RigidBodies)
-		{
-			renderer.RenderRigidBody(rigidBody);
-		}
+		renderer.RenderWorld(&world);
 
 		win.SwapBuffers();
 	}
 }
+
+/*
+	for (int i = -2; i <= 2; i++)
+	{
+		for (int j = -2; j <= i; j++)
+		{
+			for (int k = -5; k < 5; k++)
+			{
+				RigidSphere* sphere = world.SpawnRigidSphere(Vec3(2.0f * j - i,2.1f * (float)k, (2.0f - i) * sqrtf(3.0f)));
+				sphere->SetMass(10.0f);
+				sphere->SetRadius(1.0f);
+				sphere->Material.Restitution = 0.5f;
+			}
+		}
+	}
+*/
